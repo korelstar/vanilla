@@ -308,6 +308,9 @@ class Gdn_Configuration extends Gdn_Pluggable {
         } else {
             $Result = $Value;
         }
+        if($Name === 'Plugins.TrollManagement.Cache') {
+            trace($Result, "Getting Plugins.TrollManagement.Cache");
+        }
 
         return $Result;
     }
