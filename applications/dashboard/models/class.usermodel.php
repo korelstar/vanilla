@@ -3183,13 +3183,29 @@ class UserModel extends Gdn_Model {
     }
 
     /**
+     * Delete a user.
+     *
+     * {@inheritdoc}
+     */
+    public function delete($where = [], $options = []) {
+        if (is_numeric($where)) {
+            deprecated('UserModel->delete(int)', 'UserModel->deleteID(int)');
+
+            $result = $this->deleteID($where, $options);
+            return $result;
+        }
+
+        throw new \BadMethodCallException("UserModel->delete() is not supported.", 400);
+    }
+
+    /**
      * Delete a single user.
      *
-     * @param int $UserID
-     * @param array $Options See DeleteContent(), GetDelete()
+     * @param int $userID
+     * @param array $options See {@link UserModel::deleteContent()}, and {@link UserModel::getDelete()}.
      */
-    public function delete($UserID, $Options = array()) {
-        if ($UserID == $this->getSystemUserID()) {
+    public function deleteID($userID, $options = array()) {
+        if ($userID == $this->getSystemUserID()) {
             $this->Validation->addValidationResult('', 'You cannot delete the system user.');
             return false;
         }
@@ -3197,12 +3213,12 @@ class UserModel extends Gdn_Model {
         $Content = array();
 
         // Remove shared authentications.
-        $this->getDelete('UserAuthentication', array('UserID' => $UserID), $Content);
+        $this->getDelete('UserAuthentication', array('UserID' => $userID), $Content);
 
         // Remove role associations.
-        $this->getDelete('UserRole', array('UserID' => $UserID), $Content);
+        $this->getDelete('UserRole', array('UserID' => $userID), $Content);
 
-        $this->deleteContent($UserID, $Options, $Content);
+        $this->deleteContent($userID, $options, $Content);
 
         // Remove the user's information
         $this->SQL->update('User')
@@ -3211,7 +3227,7 @@ class UserModel extends Gdn_Model {
                 'Photo' => null,
                 'Password' => RandomString('10'),
                 'About' => '',
-                'Email' => 'user_'.$UserID.'@deleted.email',
+                'Email' => 'user_'.$userID.'@deleted.email',
                 'ShowEmail' => '0',
                 'Gender' => 'u',
                 'CountVisits' => 0,
@@ -3230,11 +3246,11 @@ class UserModel extends Gdn_Model {
                 'Admin' => 0,
                 'Deleted' => 1
             ))
-            ->where('UserID', $UserID)
+            ->where('UserID', $userID)
             ->put();
 
         // Remove user's cache rows
-        $this->clearCache($UserID);
+        $this->clearCache($userID);
 
         return true;
     }
